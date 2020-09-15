@@ -66,4 +66,52 @@ class ResolverPhpEncryptionTest extends TestCase
             'Password is not erased'
         );
     }
+
+    public function testMissedPassword()
+    {
+        $secret = new Secret([
+            Secret::FIELD__CLASS => ResolverPhpEncryption::class
+        ]);
+
+        $encrypted = $secret->encrypt();
+        $this->assertFalse($encrypted, 'Encrypted without a password');
+    }
+
+    public function testMissedKey()
+    {
+        $secret = new Secret([
+            Secret::FIELD__CLASS => ResolverPhpEncryption::class,
+            Secret::FIELD__VALUE => 'test.value',
+            Secret::FIELD__PARAMETERS => [
+                ResolverPhpEncryption::PARAM__PASSWORD => [
+                    ISampleParameter::FIELD__NAME => ResolverPhpEncryption::PARAM__PASSWORD,
+                    ISampleParameter::FIELD__VALUE => 'test.password'
+                ]
+            ]
+        ]);
+
+        $decrypted = $secret->decrypt();
+        $this->assertFalse($decrypted, 'Decrypted without a key');
+    }
+
+    public function testDecryptFailed()
+    {
+        $secret = new Secret([
+            Secret::FIELD__CLASS => ResolverPhpEncryption::class,
+            Secret::FIELD__VALUE => 'test.value',
+            Secret::FIELD__PARAMETERS => [
+                ResolverPhpEncryption::PARAM__PASSWORD => [
+                    ISampleParameter::FIELD__NAME => ResolverPhpEncryption::PARAM__PASSWORD,
+                    ISampleParameter::FIELD__VALUE => 'test.password'
+                ],
+                ResolverPhpEncryption::PARAM__KEY => [
+                    ISampleParameter::FIELD__NAME => ResolverPhpEncryption::PARAM__KEY,
+                    ISampleParameter::FIELD__VALUE => 'some.key'
+                ]
+            ]
+        ]);
+
+        $decrypted = $secret->decrypt();
+        $this->assertFalse($decrypted, 'Decrypting worked with an incorrect value and key');
+    }
 }

@@ -40,17 +40,12 @@ class ResolverPhpEncryption extends Item implements ISecretResolver
     protected function encrypt(ISecret &$secret): bool
     {
         $password = $this->getPassword($secret);
+        $protectedKey = KeyProtectedByPassword::createRandomPasswordProtectedKey($password);
+        $protectedEncodedKey = $protectedKey->saveToAsciiSafeString();
+        $secret->addParameterByValue(static::PARAM__KEY, $protectedEncodedKey);
 
-        try {
-            $protectedKey = KeyProtectedByPassword::createRandomPasswordProtectedKey($password);
-            $protectedEncodedKey = $protectedKey->saveToAsciiSafeString();
-            $secret->addParameterByValue(static::PARAM__KEY, $protectedEncodedKey);
-
-            $currentKey = $protectedKey->unlockKey($password);
-            $encryptedValue = Crypto::encrypt($secret->getValue(), $currentKey);
-        } catch (\Exception $e) {
-            return false;
-        }
+        $currentKey = $protectedKey->unlockKey($password);
+        $encryptedValue = Crypto::encrypt($secret->getValue(), $currentKey);
 
         $this->setSecretValue($secret, $encryptedValue);
 
@@ -71,13 +66,9 @@ class ResolverPhpEncryption extends Item implements ISecretResolver
             throw new MissedOrUnknown('key parameter');
         }
 
-        try {
-            $protectedKey = KeyProtectedByPassword::loadFromAsciiSafeString($key);
-            $currentKey = $protectedKey->unlockKey($password);
-            $decryptedValue = Crypto::decrypt($secret->getValue(), $currentKey);
-        } catch (\Exception $e) {
-            return false;
-        }
+        $protectedKey = KeyProtectedByPassword::loadFromAsciiSafeString($key);
+        $currentKey = $protectedKey->unlockKey($password);
+        $decryptedValue = Crypto::decrypt($secret->getValue(), $currentKey);
 
         $this->setSecretValue($secret, $decryptedValue);
 

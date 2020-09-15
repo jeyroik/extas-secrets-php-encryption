@@ -1,7 +1,7 @@
 ![tests](https://github.com/jeyroik/extas-secrets-php-encryption/workflows/PHP%20Composer/badge.svg?branch=master&event=push)
 ![codecov.io](https://codecov.io/gh/jeyroik/extas-secrets-php-encryption/coverage.svg?branch=master)
 <a href="https://github.com/phpstan/phpstan"><img src="https://img.shields.io/badge/PHPStan-enabled-brightgreen.svg?style=flat" alt="PHPStan Enabled"></a> 
-
+<a href="https://codeclimate.com/github/jeyroik/extas-secrets-php-encryption/maintainability"><img src="https://api.codeclimate.com/v1/badges/42dd8e0c5889ff3860cf/maintainability" /></a>
 [![Latest Stable Version](https://poser.pugx.org/jeyroik/extas-secrets-php-encryption/v)](//packagist.org/packages/jeyroik/extas-q-crawlers)
 [![Total Downloads](https://poser.pugx.org/jeyroik/extas-secrets-php-encryption/downloads)](//packagist.org/packages/jeyroik/extas-q-crawlers)
 [![Dependents](https://poser.pugx.org/jeyroik/extas-secrets-php-encryption/dependents)](//packagist.org/packages/jeyroik/extas-q-crawlers)
