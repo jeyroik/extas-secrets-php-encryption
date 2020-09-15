@@ -1,0 +1,27 @@
+{
+  "name": "jeyroik/extas-secrets-php-encryption",
+  "description": "Using defuse/php-encryption for extas secrets",
+  "require": {
+    "jeyroik/extas-secrets": "1.*",
+    "defuse/php-encryption": "2.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9",
+    "vlucas/phpdotenv": "^3.4",
+    "jeyroik/extas-repositories-mongo": "1.*",
+    "phpstan/phpstan": "0.*",
+    "jeyroik/extas-snuffbox": "0.*",
+    "jeyroik/extas-snuffbox-repositories": "0.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "extas\\": "src/",
+      "tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "up": "vendor/bin/extas init && vendor/bin/extas install",
+    "test": "vendor/bin/phpunit --testdox --coverage-clover=coverage.xml --whitelist=src tests",
+    "stan": "vendor/bin/phpstan analyse -l 5 src"
+  }
+}
