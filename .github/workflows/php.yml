@@ -10,13 +10,13 @@ jobs:
     strategy:
       matrix:
         php-version:
-          - "7.4"
+          - "8.1"
 
     steps:
     - uses: actions/checkout@v2
 
     - name: "Install PHP with extensions"
-      uses: "shivammathur/setup-php@v1"
+      uses: "shivammathur/setup-php@v2"
       with:
        php-version: "${{ matrix.php-version }}"
        coverage: "pcov"
@@ -26,15 +26,6 @@ jobs:
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress --no-suggest
-
-    - name: Copy .env
-      run: cp tests/.env .env
-
-    - name: MongoDB in GitHub Actions
-      uses: supercharge/mongodb-github-action@1.1.0
-
-    - name: Install mongodb php-extension
-      run: sudo apt install php7.4-mongodb
 
     - name: Run test suites
       run: composer run-script test

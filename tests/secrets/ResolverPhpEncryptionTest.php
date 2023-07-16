@@ -1,11 +1,13 @@
 <?php
 namespace tests\secrets;
 
-use Dotenv\Dotenv;
 use extas\components\secrets\resolvers\ResolverPhpEncryption;
 use extas\components\secrets\Secret;
-use extas\interfaces\samples\parameters\ISampleParameter;
-use PHPUnit\Framework\TestCase;
+use extas\interfaces\extensions\secrets\IExtensionSecretWithKey;
+use extas\interfaces\extensions\secrets\IExtensionSecretWithPassword;
+use extas\interfaces\parameters\IParam;
+use extas\interfaces\secrets\ISecret;
+use tests\ExtasTestCase;
 
 /**
  * Class ResolverPhpEncryptionTest
@@ -13,29 +15,26 @@ use PHPUnit\Framework\TestCase;
  * @package tests\secrets
  * @author jeyroik <jeyroik@gmail.com>
  */
-class ResolverPhpEncryptionTest extends TestCase
+class ResolverPhpEncryptionTest extends ExtasTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $env = Dotenv::create(getcwd() . '/tests/');
-        $env->load();
-    }
+    protected array $libsToInstall = [
+        'jeyroik/extas-secrets' => ['php', 'php']
+        //'vendor/lib' => ['php', 'json'] storage ext, extas ext
+    ];
+    protected bool $isNeedInstallLibsItems = true;
+    protected string $testPath = __DIR__;
 
     public function testEncryptAndDecrypt()
     {
+        /**
+         * @var IExtensionSecretWithKey|IExtensionSecretWithPassword|ISecret $secret
+         */
         $secret = new Secret([
             Secret::FIELD__CLASS => ResolverPhpEncryption::class,
-            Secret::FIELD__VALUE => 'test.value',
-            Secret::FIELD__PARAMETERS => [
-                ResolverPhpEncryption::PARAM__PASSWORD => [
-                    ISampleParameter::FIELD__NAME => ResolverPhpEncryption::PARAM__PASSWORD,
-                    ISampleParameter::FIELD__VALUE => 'test.password'
-                ]
-            ]
+            Secret::FIELD__VALUE => 'test.value'
         ]);
 
-        $encrypted = $secret->encrypt();
+        $encrypted = $secret->withPassword('test.password')->encrypt();
         $this->assertTrue($encrypted, 'Can not encrypt');
         $this->assertNotEquals(
             'test.value',
@@ -43,15 +42,15 @@ class ResolverPhpEncryptionTest extends TestCase
             'Incorrect encrypting: ' . $secret->getValue()
         );
         $this->assertNotEmpty(
-            $secret->getParameterValue(ResolverPhpEncryption::PARAM__KEY),
+            $secret->getKey(),
             'Missed key parameter'
         );
         $this->assertEmpty(
-            $secret->getParameterValue(ResolverPhpEncryption::PARAM__PASSWORD),
+            $secret->getPassword(),
             'Password is not erased'
         );
 
-        $secret->setParameterValue(ResolverPhpEncryption::PARAM__PASSWORD, 'test.password');
+        $secret->setParamValue(IExtensionSecretWithPassword::PARAM__PASSWORD, 'test.password');
         $decrypted = $secret->decrypt();
         $this->assertTrue($decrypted, 'can not decrypt');
 
@@ -62,7 +61,7 @@ class ResolverPhpEncryptionTest extends TestCase
         );
 
         $this->assertEmpty(
-            $secret->getParameterValue(ResolverPhpEncryption::PARAM__PASSWORD),
+            $secret->getPassword(),
             'Password is not erased'
         );
     }
@@ -81,37 +80,27 @@ class ResolverPhpEncryptionTest extends TestCase
     {
         $secret = new Secret([
             Secret::FIELD__CLASS => ResolverPhpEncryption::class,
-            Secret::FIELD__VALUE => 'test.value',
-            Secret::FIELD__PARAMETERS => [
-                ResolverPhpEncryption::PARAM__PASSWORD => [
-                    ISampleParameter::FIELD__NAME => ResolverPhpEncryption::PARAM__PASSWORD,
-                    ISampleParameter::FIELD__VALUE => 'test.password'
-                ]
-            ]
+            Secret::FIELD__VALUE => 'test.value'
         ]);
 
-        $decrypted = $secret->decrypt();
+        $decrypted = $secret->withPassword('test.password')->decrypt();
         $this->assertFalse($decrypted, 'Decrypted without a key');
     }
 
     public function testDecryptFailed()
     {
+        /**
+         * @var IExtensionSecretWithKey|IExtensionSecretWithPassword|ISecret $secret
+         */
         $secret = new Secret([
             Secret::FIELD__CLASS => ResolverPhpEncryption::class,
-            Secret::FIELD__VALUE => 'test.value',
-            Secret::FIELD__PARAMETERS => [
-                ResolverPhpEncryption::PARAM__PASSWORD => [
-                    ISampleParameter::FIELD__NAME => ResolverPhpEncryption::PARAM__PASSWORD,
-                    ISampleParameter::FIELD__VALUE => 'test.password'
-                ],
-                ResolverPhpEncryption::PARAM__KEY => [
-                    ISampleParameter::FIELD__NAME => ResolverPhpEncryption::PARAM__KEY,
-                    ISampleParameter::FIELD__VALUE => 'some.key'
-                ]
-            ]
+            Secret::FIELD__VALUE => 'test.value'
         ]);
 
+        $secret->withPassword('test.password');
+        $secret->withKey('some.key');
         $decrypted = $secret->decrypt();
+
         $this->assertFalse($decrypted, 'Decrypting worked with an incorrect value and key');
     }
 }

@@ -5,6 +5,9 @@ use Defuse\Crypto\Crypto;
 use Defuse\Crypto\KeyProtectedByPassword;
 use extas\components\exceptions\MissedOrUnknown;
 use extas\components\Item;
+use extas\components\secrets\ESecretFlag;
+use extas\interfaces\extensions\secrets\IExtensionSecretWithKey;
+use extas\interfaces\extensions\secrets\IExtensionSecretWithPassword;
 use extas\interfaces\secrets\ISecret;
 use extas\interfaces\secrets\ISecretResolver;
 
@@ -16,24 +19,21 @@ use extas\interfaces\secrets\ISecretResolver;
  */
 class ResolverPhpEncryption extends Item implements ISecretResolver
 {
-    public const PARAM__PASSWORD = 'password';
-    public const PARAM__KEY = 'key';
-
     /**
      * @param ISecret $secret
-     * @param string $flag
+     * @param ESecretFlag $flag
      * @return bool
      * @throws MissedOrUnknown
      */
-    public function __invoke(ISecret &$secret, string $flag): bool
+    public function __invoke(ISecret &$secret, ESecretFlag $flag): bool
     {
-        return $flag === $secret::FLAG__ENCRYPT
+        return $flag->isEncrypt()
             ? $this->encrypt($secret)
             : $this->decrypt($secret);
     }
 
     /**
-     * @param ISecret $secret
+     * @param ISecret|IExtensionSecretWithKey $secret
      * @return bool
      * @throws MissedOrUnknown
      */
@@ -42,7 +42,7 @@ class ResolverPhpEncryption extends Item implements ISecretResolver
         $password = $this->getPassword($secret);
         $protectedKey = KeyProtectedByPassword::createRandomPasswordProtectedKey($password);
         $protectedEncodedKey = $protectedKey->saveToAsciiSafeString();
-        $secret->addParameterByValue(static::PARAM__KEY, $protectedEncodedKey);
+        $secret->withKey($protectedEncodedKey);
 
         $currentKey = $protectedKey->unlockKey($password);
         $encryptedValue = Crypto::encrypt($secret->getValue(), $currentKey);
@@ -53,14 +53,14 @@ class ResolverPhpEncryption extends Item implements ISecretResolver
     }
 
     /**
-     * @param ISecret $secret
+     * @param ISecret|IExtensionSecretWithKey $secret
      * @return bool
      * @throws MissedOrUnknown
      */
     protected function decrypt(ISecret &$secret): bool
     {
         $password = $this->getPassword($secret);
-        $key = $secret->getParameterValue(static::PARAM__KEY, '');
+        $key = $secret->getKey();
 
         if (!$key) {
             throw new MissedOrUnknown('key parameter');
@@ -82,17 +82,17 @@ class ResolverPhpEncryption extends Item implements ISecretResolver
     protected function setSecretValue(ISecret &$secret, string $value)
     {
         $secret->setValue($value);
-        $secret->setParameterValue(static::PARAM__PASSWORD, null);
+        $secret->setParamValue(IExtensionSecretWithPassword::PARAM__PASSWORD, '');
     }
 
     /**
-     * @param ISecret $secret
+     * @param ISecret|IExtensionSecretWithPassword $secret
      * @return string
      * @throws MissedOrUnknown
      */
     protected function getPassword(ISecret $secret): string
     {
-        $password = $secret->getParameterValue(static::PARAM__PASSWORD, '');
+        $password = $secret->getPassword();
 
         if (!$password) {
             throw new MissedOrUnknown('password parameter');
